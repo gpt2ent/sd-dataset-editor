@@ -3,10 +3,6 @@ import os
 import numpy as np
 import base64
 
-#with ui.card().classes('bg-warning') as card:
-#    ui.label('test1')
-
-
 def to_base64(path, picname):
     fullpath = os.path.join(path, picname)
 
@@ -60,18 +56,17 @@ class Dataset:
                        'txtname': pic['filename'],
                        'base64': to_base64(self.path, pic['fullname']),
                        'text': text} for pic, text in zip(pictures, output_texts)]
-        
+
         self.texts = texts
-        
+
     def update_text(self, i, new_text):
-        print(i)
         if not self.is_ready:
             return
-        
+
         self.table[i]['text'] = new_text
         self.unsaved_changes += 1
         #self.upd_unsaved_changes()
-        
+
     def upd_unsaved_changes(self):
         if self.unsaved_changes > 0:
             ui.notify(f'{self.unsaved_changes} unsaved changes')
@@ -101,7 +96,7 @@ class Dataset:
         for entry in self.table:
             with open(os.path.join(self.path, f'{entry["txtname"]}{self.save_option}'), 'w') as f:
                 f.write(entry['text'])
-        
+
         cards = self.cards
         [c.save() for c in cards]
         self.read_path(self.path)
@@ -125,7 +120,7 @@ class DatasetCard:
         self.dataset = dataset
         self.selected = False
         self.text_in_file = element['text']
-        
+
         self.card = ui.card()
         with self.card:
             ui.image(element["base64"])
@@ -133,7 +128,7 @@ class DatasetCard:
                 ui.checkbox(f'{element["fullname"]}').bind_value(self, 'selected')
                 self.card_info = ui.markdown(f'**Previous text:**\n\n{element["text"]}')
                 self.input = ui.textarea('New text',value=element["text"], on_change=lambda e: self.update_dataset(e.value))
-                
+
     def update_dataset(self, text):
         self.dataset.update_text(self.i, text)
         self.card.style('background-color: #FFEECC')
@@ -159,7 +154,6 @@ class DatasetCard:
         self.clear_card()
         self.selected = False
 
-    
 
 def fill_dataset(dataset: Dataset, path, table):
     dset_controls.clear()
@@ -190,7 +184,6 @@ dpath_btn = ui.button('Load dataset', on_click=lambda: fill_dataset(dataset, dpa
 dset_controls = ui.row()
 
 table = ui.row().style('width: 100%')
-
 
 
 ui.run(title='Dataset Editor')
