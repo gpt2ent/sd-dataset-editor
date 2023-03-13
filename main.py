@@ -3,11 +3,38 @@ import os
 import numpy as np
 import base64
 
+async def toggle_dark(x):
+    js_value = str(x.value).lower()
+    await ui.run_javascript(f'Quasar.Dark.set({js_value})', respond=False)
+
+s1 = ui.switch('Toggle dark mode', on_change=toggle_dark)
+
+ui.add_head_html("""
+<style>
+.body--dark .card-changed {
+    background-color: #6B3400;
+}
+
+.body--light .card-changed {
+    background-color: #FFEECC;
+}
+</style>
+""")
+
 def to_base64(path, picname):
     fullpath = os.path.join(path, picname)
 
     with open(fullpath, 'rb') as f:
         return 'data:image/png;base64, '+str(base64.b64encode(f.read()),encoding='utf-8')
+
+def endswithmany(str, list_of_extensions):
+    return np.any([str.endswith(i) for i in list_of_extensions])
+
+def filename(str):
+    filenameparts = str.split('.')
+    return {'filename':'.'.join(filenameparts[:-1]),
+            'extension': filenameparts[-1],
+            'fullname': str}
 
 class Dataset:
     def __init__(self) -> None:
@@ -103,15 +130,6 @@ class Dataset:
         self.cards = cards
 
 
-def endswithmany(str, list_of_extensions):
-    return np.any([str.endswith(i) for i in list_of_extensions])
-
-def filename(str):
-    filenameparts = str.split('.')
-    return {'filename':'.'.join(filenameparts[:-1]),
-            'extension': filenameparts[-1],
-            'fullname': str}
-
 dataset = Dataset()
 
 class DatasetCard:
@@ -121,7 +139,7 @@ class DatasetCard:
         self.selected = False
         self.text_in_file = element['text']
 
-        self.card = ui.card()
+        self.card = ui.card().classes('max-w-lg')
         with self.card:
             ui.image(element["base64"])
             with ui.card_section():
@@ -131,10 +149,10 @@ class DatasetCard:
 
     def update_dataset(self, text):
         self.dataset.update_text(self.i, text)
-        self.card.style('background-color: #FFEECC')
+        self.card.classes('card-changed')
 
     def clear_card(self):
-        self.card.style(remove='background-color: #FFEECC')
+        self.card.classes(remove='card-changed')
 
     def prepend_to_input(self, text):
         self.input.set_value(f'{text}{self.input.value}')
@@ -169,11 +187,11 @@ def fill_dataset(dataset: Dataset, path, table):
                 with ui.row():
                     ui.button('Select all', on_click=lambda: dataset.select_deselect_all())
                     ui.button('Add text to the end of selected cards', on_click=lambda: dataset.update_selected_cards(suffix.value))
-                ui.button('Reset selected cards',on_click=lambda: dataset.reset_selected_cards())
+                    ui.button('Reset selected cards',on_click=lambda: dataset.reset_selected_cards())
             with ui.column():
                 ui.label('Save captions as')
                 ui.select([".txt",".caption"]).bind_value(dataset, 'save_option').style('min_width: 150px')
-                ui.button('Save dataset', on_click=lambda: dataset.save()).props('color=orange').props('size="XL"')
+            ui.button('Save dataset', on_click=lambda: dataset.save()).props('color=orange').props('size=xl')
         with table:
             for i, element in enumerate(dataset.table):
                 dataset.cards.append(DatasetCard(element, dataset, i))
@@ -181,9 +199,16 @@ def fill_dataset(dataset: Dataset, path, table):
 dpath = ui.input('Dataset path').style('min-width: 600px')
 dpath_btn = ui.button('Load dataset', on_click=lambda: fill_dataset(dataset, dpath.value, table))
 
-dset_controls = ui.row()
+#with ui.footer():  # does not work with mobile but nice idea on pc tho
+dset_controls = ui.row().classes('w-full justify-between')
 
-table = ui.row().style('width: 100%')
+table = ui.row().classes('w-full')
+
+async def scroll_top():
+    await ui.run_javascript("window.scrollTo(0, 0)", respond=False)
+
+with ui.page_sticky():
+    ui.button('Scroll to the top', on_click=scroll_top)
 
 
-ui.run(title='Dataset Editor')
+ui.run(title='Dataset Tag Editor')
