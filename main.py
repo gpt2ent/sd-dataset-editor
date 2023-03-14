@@ -116,6 +116,9 @@ class Dataset:
             for c in self.cards:
                 c.selected = True
 
+    def replace(self, source, replacement, selected_only):
+        [c.replace(source, replacement) for c in self.cards if c.selected or not selected_only]
+
     def save(self):
         for textfile in self.texts:
             os.remove(os.path.join(self.path, textfile['fullname']))
@@ -167,6 +170,11 @@ class DatasetCard:
         #self.update_dataset(f'{self.text_in_file}')
         self.clear_card()
 
+    def replace(self, source, replacement):
+        if source in self.input.value:
+            new_value = self.input.value.replace(source, replacement)
+            self.input.set_value(new_value)
+
     def save(self):
         self.card_info.set_content(f'**Previous text:**\n\n{self.input.value}')
         self.clear_card()
@@ -188,6 +196,12 @@ def fill_dataset(dataset: Dataset, path, table):
                     ui.button('Select all', on_click=lambda: dataset.select_deselect_all())
                     ui.button('Add text to the end of selected cards', on_click=lambda: dataset.update_selected_cards(suffix.value))
                     ui.button('Reset selected cards',on_click=lambda: dataset.reset_selected_cards())
+            with ui.column():
+                ui.label('Simple search and replace')
+                replace1 = ui.input('Text to replace')
+                replace2 = ui.input('Replace with this text')
+                ui.button('Replace text in selected cards', on_click=lambda: dataset.replace(replace1.value, replace2.value, selected_only=True))
+                ui.button('Replace text in ALL cards', on_click=lambda: dataset.replace(replace1.value, replace2.value, selected_only=False))
             with ui.column():
                 ui.label('Save captions as')
                 ui.select([".txt",".caption"]).bind_value(dataset, 'save_option').style('min_width: 150px')
