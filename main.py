@@ -196,7 +196,7 @@ def fill_dataset(dataset: Dataset, path, table):
             for i, element in enumerate(dataset.table):
                 dataset.cards.append(DatasetCard(element, dataset, i))
 
-dpath = ui.input('Dataset path').style('min-width: 600px')
+dpath = ui.input('Dataset path',placeholder="C:\\Users\\User\\datasets\\dataset1").style('min-width: 600px')
 dpath_btn = ui.button('Load dataset', on_click=lambda: fill_dataset(dataset, dpath.value, table))
 
 #with ui.footer():  # does not work with mobile but nice idea on pc tho
